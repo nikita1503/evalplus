@@ -808,10 +808,40 @@ Please implement this function in a Python.
 """
 
         return VLlmDecoder.codegen(self, prompt, do_sample, num_samples)
+    
+class CustomD(VLlmDecoder):
+    def __init__(self, name: str, **kwargs) -> None:
+        super().__init__(name, **kwargs)
+        self.eos += ["\n```"]
+
+    def codegen(
+        self, prompt: str, do_sample: bool = True, num_samples: int = 200
+    ) -> List[str]:
+        prompt = f"""You are an exceptionally intelligent coding assistant that consistently delivers accurate and reliable responses to user instructions.
+
+@@ Instruction
+Write a solution to the following problem:
+```python
+{prompt}
+```
+
+@@ Response
+```python
+{prompt}"""
+
+        return VLlmDecoder.codegen(self, prompt, do_sample, num_samples)
 
 def make_model(
-    name: str, batch_size: int = 1, temperature: float = 0.8, dataset: str = None
+    name: str, batch_size: int = 1, temperature: float = 0.8, dataset: str = None, local:bool = False
 ):
+    if local:
+        return CustomD(
+            batch_size=batch_size,
+            name=name,
+            temperature=temperature,
+            direct_completion=True,
+            dataset=dataset,
+        )
     if name == "codegen-2b":
         return HFTorchDecoder(
             batch_size=batch_size,
